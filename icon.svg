@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c83a24"/>
+      <stop offset="1" stop-color="#a42b19"/>
+    </linearGradient>
+    <linearGradient id="pin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#fbeee8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- soft ground shadow under the pin -->
+  <ellipse cx="256" cy="440" rx="78" ry="16" fill="#7a1f12" opacity=".45"/>
+  <!-- map pin -->
+  <path d="M256 70c-86 0-150 64-150 146 0 104 122 196 142 222a10 10 0 0 0 16 0c20-26 142-118 142-222 0-82-64-146-150-146z" fill="url(#pin)"/>
+  <!-- fork -->
+  <g fill="#b8321f">
+    <rect x="200" y="132" width="10" height="64" rx="5"/>
+    <rect x="218" y="132" width="10" height="64" rx="5"/>
+    <rect x="236" y="132" width="10" height="64" rx="5"/>
+    <path d="M196 186h54v14c0 16-11 26-20 29v86a7 7 0 0 1-14 0v-86c-9-3-20-13-20-29z"/>
+  </g>
+  <!-- knife -->
+  <path d="M302 132c22 10 34 40 34 84v28h-20v71a7 7 0 0 1-14 0z" fill="#b8321f"/>
+  <!-- saffron star -->
+  <path d="M378 92l12 25 27 4-20 19 5 27-24-13-24 13 5-27-20-19 27-4z" fill="#f0b429" stroke="#a42b19" stroke-width="6" stroke-linejoin="round"/>
+</svg>
