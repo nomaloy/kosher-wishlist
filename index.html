@@ -31,6 +31,8 @@ button,input,select{font:inherit;color:inherit}
 .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;max-width:1240px;margin:0 auto}
 h1{font:800 clamp(32px,5vw,46px)/1.05 Archivo,Inter,sans-serif;letter-spacing:-.02em;margin:0}
 .sync{font-size:13px;opacity:.85;min-height:20px}
+.dl{margin-top:8px;border:1px solid currentColor;background:transparent;color:var(--bandink);border-radius:10px;min-height:40px;padding:0 14px;font-size:14px;font-weight:600;cursor:pointer}
+.dl:focus-visible{outline:3px solid var(--star);outline-offset:2px}
 .tally{display:flex;gap:18px;flex-wrap:wrap;font-size:14px}
 .tally b{font:800 24px/1 Archivo,sans-serif;display:block}
 .tabs{display:flex;gap:4px;max-width:1240px;margin:18px auto 0;overflow-x:auto;scrollbar-width:none}
@@ -89,7 +91,7 @@ main{max-width:1240px;margin:0 auto;padding:18px max(4vw,16px) 80px}
 <body>
 <header class="band">
   <div class="top">
-    <div><h1>Kosher wishlist</h1><div class="sync" id="sync">Loading your picks…</div></div>
+    <div><h1>Kosher wishlist</h1><div class="sync" id="sync">Loading your picks…</div><button class="dl" id="dl" type="button">⬇ Download my picks</button></div>
     <div class="tally" id="tally"></div>
   </div>
   <nav class="tabs" role="tablist" id="tabs"></nav>
@@ -246,6 +248,22 @@ async function write(id, v){
   }).finally(() => { busy[id] = null; });
   await busy[id];
 }
+function downloadPicks(){
+  const ord = {"Yes":0,"Maybe":1,"Been there":2,"No":3};
+  const RN = {nyc:"NYC", bergen:"Bergen County", monsey:"Monsey & area"};
+  const rows = DATA.filter(r => picks[r.id]).sort((a,b) =>
+    (ord[picks[a.id]]-ord[picks[b.id]]) || RN[a.r].localeCompare(RN[b.r]) || (a.a||"").localeCompare(b.a||"") || a.n.localeCompare(b.n));
+  const H = ["Pick","Region","Name","Borough / Town","Neighborhood","Address","Category","M/D/P","Cuisine","Certification","Notes"];
+  const esc = v => { v = v==null ? "" : String(v); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+  const lines = [H.join(",")].concat(rows.map(r => [picks[r.id],RN[r.r],r.n,r.a,r.h,r.ad,r.c,r.m,r.q,r.k,r.no].map(esc).join(",")));
+  const blob = new Blob(["\ufeff"+lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "Kosher Wishlist Picks " + new Date().toLocaleDateString("en-CA") + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+document.getElementById("dl").addEventListener("click", downloadPicks);
 function setPick(id, v){
   const prev = picks[id] || "";
   const next = prev===v ? "" : v;
