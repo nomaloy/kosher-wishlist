@@ -101,7 +101,7 @@ main{max-width:1240px;margin:0 auto;padding:18px max(4vw,16px) 80px}
 <div class="tools">
   <div class="tin">
     <div class="row">
-      <input id="q" type="search" placeholder="Search name, cuisine, area, hechsher" aria-label="Search">
+      <input id="q" type="search" placeholder="Search all restaurants: name, cuisine, area, hechsher" aria-label="Search">
       <select id="area" aria-label="Area"></select>
       <select id="sort" aria-label="Sort">
         <option value="area">Sort: by area</option>
@@ -146,6 +146,7 @@ const STATUS_CHIPS = [["all","All"],["Yes","Yes"],["Maybe","Maybe"],["none","Not
 const KIND_CHIPS = [["all","Any type"],["Meat","Meat"],["Dairy","Dairy"],["Pareve","Pareve"]];
 
 const DIST = {};
+let ALL = false;
 let GPS = null;
 function here(){ if(st.near==="gps" && GPS) return GPS; return (PLACES.find(p=>p[0]===st.near)||PLACES[0])[2]; }
 function rows(){
@@ -198,7 +199,7 @@ function card(r){
   const where = [r.a, r.h].filter(Boolean).join(" · ");
   return `<article class="card" data-s="${p}">
     <div class="nm"><h3>${esc(r.n)}</h3>${r.s?'<span class="star" title="Top buzz">★</span>':""}</div>
-    <div class="meta">${st.tab==="near"?`<b class="mi">~${DIST[r.id]<1?"&lt;1":DIST[r.id].toFixed(1)} mi</b> · `:""}${esc(where)}${st.tab==="mine"||st.tab==="near"?` · ${REG[r.r]}`:""}</div>
+    <div class="meta">${st.tab==="near"?`<b class="mi">~${DIST[r.id]<1?"&lt;1":DIST[r.id].toFixed(1)} mi</b> · `:""}${esc(where)}${st.tab==="mine"||st.tab==="near"||ALL?` · ${REG[r.r]}`:""}</div>
     <div class="tags">${r.m?`<span class="k ${esc(r.m)}">${esc(r.m)}</span>`:""}${r.q?`<span>${esc(r.q)}</span>`:""}${r.c?`<span>${esc(r.c)}</span>`:""}${r.k?`<span>${esc(r.k)}</span>`:""}</div>
     ${r.no?`<div class="note">${esc(r.no)}</div>`:""}
     <a class="maps" href="${mapUrl(r)}" target="_blank" rel="noopener">${esc(r.ad || "Find on Google Maps")} ↗</a>
@@ -207,26 +208,27 @@ function card(r){
 }
 function renderList(){
   const q = st.q.trim().toLowerCase();
-  let list = rows().filter(r => {
+  ALL = !!q && st.tab!=="near" && st.tab!=="mine";
+  let list = (ALL ? DATA : rows()).filter(r => {
     const p = picks[r.id];
     if(st.status==="none" ? p : st.status!=="all" && p!==st.status) return false;
     if(st.kind!=="all" && !(r.m||"").startsWith(st.kind)) return false;
     if(st.star && !r.s) return false;
-    if(st.area && r.a!==st.area) return false;
-    if(q && ![r.n,r.a,r.h,r.q,r.c,r.k,r.ad].join(" ").toLowerCase().includes(q)) return false;
+    if(st.area && !ALL && r.a!==st.area) return false;
+    if(q && ![r.n,r.a,r.h,r.q,r.c,r.k,r.ad,r.m,r.no,REG[r.r]].join(" ").toLowerCase().includes(q)) return false;
     return true;
   });
   if(st.tab!=="near" && st.sort==="name") list = [...list].sort((a,b) => a.n.localeCompare(b.n));
   if(st.tab!=="near" && st.sort==="buzz") list = [...list].sort((a,b) => (b.s||0)-(a.s||0));
-  $("count").textContent = `${list.length} of ${rows().length} places`;
+  $("count").textContent = ALL ? `${list.length} match${list.length===1?"":"es"} in all areas` : `${list.length} of ${rows().length} places`;
   if(!list.length){
-    $("list").innerHTML = `<div class="empty">${st.tab==="mine"?"Nothing marked Yes yet. Tap Yes on any place to add it here.":st.tab==="near"?"Nothing within this distance. Try a wider radius.":"No places match these filters."}</div>`;
+    $("list").innerHTML = `<div class="empty">${st.tab==="mine"?"Nothing marked Yes yet. Tap Yes on any place to add it here.":st.tab==="near"?"Nothing within this distance. Try a wider radius.":ALL?"No restaurant in any area matches that search.":"No places match these filters."}</div>`;
     return;
   }
-  let html = st.tab==="style" ? `<p class="stylenote">Jewish-style food without a reliable hechsher. Most are open on Shabbat, and some serve meat with dairy or treif items. Notes say which.</p>` : "", g = null;
-  const grouped = st.tab!=="near" && (st.sort==="area" || st.tab==="mine");
+  let html = st.tab==="style" && !ALL ? `<p class="stylenote">Jewish-style food without a reliable hechsher. Most are open on Shabbat, and some serve meat with dairy or treif items. Notes say which.</p>` : "", g = null;
+  const grouped = st.tab!=="near" && (st.sort==="area" || st.tab==="mine" || ALL);
   list.forEach(r => {
-    const key = st.tab==="mine" ? REG[r.r] : r.a;
+    const key = (st.tab==="mine" || ALL) ? REG[r.r] : r.a;
     if(grouped && key!==g){ g = key; html += `<h2 class="grp">${esc(g)}</h2>`; }
     html += card(r);
   });
